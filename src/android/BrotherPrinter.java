@@ -191,8 +191,8 @@ public class BrotherPrinter extends CordovaPlugin {
 		Bitmap image = Bitmap.createBitmap(width + 500, height + 450, Bitmap.Config.ARGB_8888);
 		*/
 
-		int width = 660;
-		int height = 289;
+		int width = 1320;
+		int height = 468;
 		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
 		Canvas canvas = new Canvas(image);
@@ -201,10 +201,10 @@ public class BrotherPrinter extends CordovaPlugin {
 
 		paint.setColor(textColor);
 		canvas.drawText(text, 0, baseline, paint);
-		canvas.drawText(text1, 0, baseline + 50, paint);
-		canvas.drawText(text2, 0, baseline + 100, paint);
-		canvas.drawText(text3, 0, baseline + 150, paint);
-		canvas.drawText(text4, 0, baseline + 200, paint);
+		canvas.drawText(text1, 0, baseline + 100, paint);
+		canvas.drawText(text2, 0, baseline + 200, paint);
+		canvas.drawText(text3, 0, baseline + 300, paint);
+		canvas.drawText(text4, 0, baseline + 400, paint);
 		return image;
 	}
 
@@ -228,7 +228,7 @@ public class BrotherPrinter extends CordovaPlugin {
 			j.optString("row3"),
 			j.optString("row4"),
 			j.optString("row5"),
-			40, BLACK
+			80, BLACK
 		);
 
 
