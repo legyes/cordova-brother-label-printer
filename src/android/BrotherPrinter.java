@@ -219,7 +219,7 @@ public class BrotherPrinter extends CordovaPlugin {
 			j.optString("row3"),
 			j.optString("row4"),
 			j.optString("row5"),
-			80, BLACK
+			90, BLACK
 		);
 
 
