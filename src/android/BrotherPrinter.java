@@ -185,7 +185,7 @@ public class BrotherPrinter extends CordovaPlugin {
 		paint.setColor(Color.WHITE);
 		paint.setTextAlign(Paint.Align.LEFT);
 		float baseline = -paint.ascent(); // ascent() is negative
-		int width = (int) (paint.measureText(text1) + 0.5f); // round
+		int width = (int) (paint.measureText("qwertzuiopasdfghjqwertzuiopasdfghj") + 0.5f); // round
 		int height = (int) (baseline + paint.descent() + 0.5f);
 		Bitmap image = Bitmap.createBitmap(width + 500, height + 450, Bitmap.Config.ARGB_8888);
 		Canvas canvas = new Canvas(image);
