@@ -191,7 +191,7 @@ public class BrotherPrinter extends CordovaPlugin {
 		Bitmap image = Bitmap.createBitmap(width + 500, height + 450, Bitmap.Config.ARGB_8888);
 		*/
 
-		int width = 620;
+		int width = 660;
 		int height = 289;
 		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
@@ -228,7 +228,7 @@ public class BrotherPrinter extends CordovaPlugin {
 			j.optString("row3"),
 			j.optString("row4"),
 			j.optString("row5"),
-			80, BLACK
+			40, BLACK
 		);
 
 
