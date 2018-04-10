@@ -195,7 +195,7 @@ public class BrotherPrinter extends CordovaPlugin {
 		canvas.drawText(text1, 0, baseline + 100, paint);
 		canvas.drawText(text2, 0, baseline + 200, paint);
 		canvas.drawText(text3, 0, baseline + 300, paint);
-		canvas.drawText(text4, 0, baseline + 400, paint);
+		canvas.drawText(text4 + ( width+"" ), 0, baseline + 400, paint);
 		return image;
 	}
 
@@ -219,7 +219,7 @@ public class BrotherPrinter extends CordovaPlugin {
 			j.optString("row3"),
 			j.optString("row4"),
 			j.optString("row5"),
-			90, BLACK
+			80, BLACK
 		);
 
 
