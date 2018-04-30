@@ -54,366 +54,343 @@ import static android.graphics.Color.BLACK;
 
 public class BrotherPrinter extends CordovaPlugin {
 
-	String modelName = "QL-810W";
-	private NetPrinter[] netPrinters;
+    String modelName = "QL-810W";
+    private NetPrinter[] netPrinters;
 
-	private String ipAddress = null;
-	private String macAddress = null;
-	private Boolean searched = false;
-	private Boolean found = false;
+    private String ipAddress   = null;
+    private String macAddress  = null;
+    private Boolean searched   = false;
+    private Boolean found      = false;
 
-	//token to make it easy to grep logcat
-	private static final String TAG = "print";
+    //token to make it easy to grep logcat
+    private static final String TAG = "print";
 
-	private CallbackContext callbackctx;
+    private CallbackContext callbackctx;
 
-	@Override
-	public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+    @Override
+    public boolean execute (String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
 
-		if ("findNetworkPrinters".equals(action)) {
-			findNetworkPrinters(callbackContext);
-			return true;
-		}
+        if ("findNetworkPrinters".equals(action)) {
+            findNetworkPrinters(callbackContext);
+            return true;
+        }
 
-		if ("printViaSDK".equals(action)) {
-			printViaSDK(args, callbackContext);
-			return true;
-		}
+        if ("printViaSDK".equals(action)) {
+            printViaSDK(args, callbackContext);
+            return true;
+        }
 
-		if ("sendUSBConfig".equals(action)) {
-			sendUSBConfig(args, callbackContext);
-			return true;
-		}
+        if ("sendUSBConfig".equals(action)) {
+            sendUSBConfig(args, callbackContext);
+            return true;
+        }
 
-		return false;
-	}
-
-	private NetPrinter[] enumerateNetPrinters() {
-		Printer myPrinter = new Printer();
-		PrinterInfo myPrinterInfo = new PrinterInfo();
-		netPrinters = myPrinter.getNetPrinters(modelName);
-		return netPrinters;
-	}
-
-	private void findNetworkPrinters(final CallbackContext callbackctx) {
-
-		cordova.getThreadPool().execute(new Runnable() {
-			public void run() {
-				try {
-
-					searched = true;
-
-					NetPrinter[] netPrinters = enumerateNetPrinters();
-					int netPrinterCount = netPrinters.length;
-
-					JSONArray jArray = new JSONArray();
-					JSONObject jItem = new JSONObject();
-
-					if (netPrinterCount > 0) {
-						found = true;
-						Log.d(TAG, "---- network printers found! ----");
-
-						for (int i = 0; i < netPrinterCount; i++) {
-							ipAddress = netPrinters[i].ipAddress;
-							macAddress = netPrinters[i].macAddress;
-
-							jArray = new JSONArray();
-							jItem = new JSONObject();
-
-							jItem.put("index", Integer.toString(i));
-							jItem.put("modelName", netPrinters[i].modelName);
-							jItem.put("ipAddress", netPrinters[i].ipAddress);
-							jItem.put("macAddress", netPrinters[i].macAddress);
-							jItem.put("serNo", netPrinters[i].serNo);
-							jItem.put("nodeName", netPrinters[i].nodeName);
-							
-							jArray.put(jItem);
-
-							Log.d(TAG,
-								" idx:    " + Integer.toString(i) +
-								"\n model:  " + netPrinters[i].modelName +
-								"\n ip:     " + netPrinters[i].ipAddress +
-								"\n mac:    " + netPrinters[i].macAddress +
-								"\n serial: " + netPrinters[i].serNo +
-								"\n name:   " + netPrinters[i].nodeName
-							);
-						}
-
-						Log.d(TAG, "---- /network printers found! ----");
-
-					} else if (netPrinterCount == 0) {
-						found = false;
-						Log.d(TAG, "!!!! No network printers found !!!!");
-					}
-
-					JSONArray args = new JSONArray();
-					PluginResult result;
-
-					Boolean available = netPrinterCount > 0;
-
-					args.put(available);
-					args.put(jArray);
-
-					result = new PluginResult(PluginResult.Status.OK, args);
-
-					callbackctx.sendPluginResult(result);
-
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
-			}
-
-		});
-
-	}
-
-	public static Bitmap bmpFromBase64(String base64, final CallbackContext callbackctx) {
-		try {
-			byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
-			return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-
-	public Bitmap textAsBitmap(String text, String text1, String text2, String text3, String text4, float textSize, int textColor) {
-		Paint paint = new Paint();
-		paint.setTextSize(textSize);
-		paint.setColor(Color.WHITE);
-		paint.setTextAlign(Paint.Align.LEFT);
-		float baseline = -paint.ascent(); // ascent() is negative
-		/*
-		int width = (int) (paint.measureText("qwertzuiopasdfgqwertzuiopasdfg") + 0.5f); // round
-		int height = (int) (baseline + paint.descent() + 0.5f);
-		Bitmap image = Bitmap.createBitmap(width + 500, height + 450, Bitmap.Config.ARGB_8888);
-		*/
-
-		int width = 1320;
-		int height = 468;
-		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-
-		Canvas canvas = new Canvas(image);
-		//canvas.drawRect(0, 0, width + 500, height + 450, paint);
-		canvas.drawRect(0, 0, width, height, paint);
-
-		paint.setColor(textColor);
-		canvas.drawText(text, 0, baseline, paint);
-		canvas.drawText(text1, 0, baseline + 100, paint);
-		canvas.drawText(text2, 0, baseline + 200, paint);
-		canvas.drawText(text3, 0, baseline + 300, paint);
-		canvas.drawText(text4, 0, baseline + 400, paint);
-		return image;
-	}
-
-
-	private void printViaSDK(final JSONArray args, final CallbackContext callbackctx) {
-		//final Bitmap bitmap = bmpFromBase64(args.optString(0, null), callbackctx);
-		JSONObject j = new JSONObject();
-
-		try {
-			j = new JSONObject(args.optJSONArray(0).optString(0));
-		} catch (JSONException e) {
-			final PluginResult result;
-			result = new PluginResult(PluginResult.Status.ERROR, "JSON error");
-			callbackctx.sendPluginResult(result);
-		}
-
-
-		final Bitmap bitmap = textAsBitmap(
-			j.optString("row1"),
-			j.optString("row2"),
-			j.optString("row3"),
-			j.optString("row4"),
-			j.optString("row5"),
-			80, BLACK
-		);
-
-
-
-		if (!searched) {
-			final PluginResult result;
-			result = new PluginResult(PluginResult.Status.ERROR, "You must first run findNetworkPrinters() to search the network.");
-			callbackctx.sendPluginResult(result);
-		}
-
-		if (!found) {
-			final PluginResult result;
-			result = new PluginResult(PluginResult.Status.ERROR, "No printer was found. Aborting.");
-			callbackctx.sendPluginResult(result);
-		}
-
-		cordova.getThreadPool().execute(new Runnable() {
-			public void run() {
-				try {
-
-					Printer myPrinter = new Printer();
-					PrinterInfo myPrinterInfo = new PrinterInfo();
-
-					myPrinterInfo = myPrinter.getPrinterInfo();
-
-					Log.d(TAG, myPrinterInfo.toString());
-
-					// https://mariusbelin.files.wordpress.com/2017/02/brother-print-sdk-for-android-manual.pdf
-					// PrinterInfo.Halftone.PATTERNDITHER / ERRORDIFFUSION / THRESHOLD
-					// PrinterInfo.Align.KEFT / RIGHT / CENTER
-					// PrinterInfo.VAlign.TOP / MIDDLE / BOTTOM
-					// PrinterInfo.Margin = int
-
-					myPrinterInfo.printerModel = PrinterInfo.Model.QL_810W;
-					myPrinterInfo.port = PrinterInfo.Port.NET;
-					//myPrinterInfo.printMode     = PrinterInfo.PrintMode.ORIGINAL;
-					myPrinterInfo.orientation = PrinterInfo.Orientation.PORTRAIT;
-					myPrinterInfo.printMode = PrinterInfo.PrintMode.FIT_TO_PAGE;
-					//myPrinterInfo.orientation   = PrinterInfo.Orientation.LANDSCAPE;
-					//myPrinterInfo.printQuality	= PrinterInfo.PrintQuality.HIGH_RESOLUTION;
-					myPrinterInfo.printQuality = PrinterInfo.PrintQuality.NORMAL;
-					myPrinterInfo.numberOfCopies = 1;
-
-					myPrinterInfo.paperSize = PrinterInfo.PaperSize.CUSTOM;
-					myPrinterInfo.ipAddress = ipAddress;
-					myPrinterInfo.macAddress = macAddress;
-					myPrinter.setPrinterInfo(myPrinterInfo);
-
-					LabelInfo myLabelInfo = new LabelInfo();
-
-					//myLabelInfo.labelNameIndex  = myPrinter.checkLabelInPrinter();
-					//myLabelInfo.labelNameIndex  = 9; // W62H29
-					myLabelInfo.labelNameIndex = LabelInfo.QL700.valueOf("W62H29").ordinal();
-					myLabelInfo.isAutoCut = true;
-					myLabelInfo.isEndCut = true;
-					myLabelInfo.isHalfCut = false;
-					myLabelInfo.isSpecialTape = false;
-
-
-					//label info must be set after setPrinterInfo, it's not in the docs
-					myPrinter.setLabelInfo(myLabelInfo);
-
-					String labelWidth = "" + myPrinter.getLabelParam().labelWidth;
-					String paperWidth = "" + myPrinter.getLabelParam().paperWidth;
-					Log.d(TAG, "paperWidth = " + paperWidth);
-					Log.d(TAG, "labelWidth = " + labelWidth);
-
-					PrinterStatus status = myPrinter.printImage(bitmap);
-
-					//casting to string doesn't work, but this does... wtf Brother
-					String status_code = "" + status.errorCode;
-
-					Log.d(TAG, "PrinterStatus: " + status_code);
-
-					final PluginResult result;
-					result = new PluginResult(PluginResult.Status.OK, status_code);
-					callbackctx.sendPluginResult(result);
-
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
-
-
-	private void sendUSBConfig(final JSONArray args, final CallbackContext callbackctx) {
-
-		cordova.getThreadPool().execute(new Runnable() {
-			public void run() {
-
-				Printer myPrinter = new Printer();
-
-				Context context = cordova.getActivity().getApplicationContext();
-
-				UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
-				UsbDevice usbDevice = myPrinter.getUsbDevice(usbManager);
-				if (usbDevice == null) {
-					Log.d(TAG, "USB device not found");
-					return;
-				}
-
-				final String ACTION_USB_PERMISSION = "com.threescreens.cordova.plugin.brotherPrinter.USB_PERMISSION";
-
-				PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
-				usbManager.requestPermission(usbDevice, permissionIntent);
-
-				final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
-					@Override
-					public void onReceive(Context context, Intent intent) {
-						String action = intent.getAction();
-						if (ACTION_USB_PERMISSION.equals(action)) {
-							synchronized(this) {
-								if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false))
-									Log.d(TAG, "USB permission granted");
-								else
-									Log.d(TAG, "USB permission rejected");
-							}
-						}
-					}
-				};
-
-				context.registerReceiver(mUsbReceiver, new IntentFilter(ACTION_USB_PERMISSION));
-
-				while (true) {
-					if (!usbManager.hasPermission(usbDevice)) {
-						usbManager.requestPermission(usbDevice, permissionIntent);
-					} else {
-						break;
-					}
-
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-
-				PrinterInfo myPrinterInfo = new PrinterInfo();
-
-				myPrinterInfo = myPrinter.getPrinterInfo();
-
-				myPrinterInfo.printerModel = PrinterInfo.Model.QL_810W;
-				myPrinterInfo.port = PrinterInfo.Port.USB;
-				myPrinterInfo.paperSize = PrinterInfo.PaperSize.CUSTOM;
-
-				myPrinter.setPrinterInfo(myPrinterInfo);
-
-				LabelInfo myLabelInfo = new LabelInfo();
-
-				myLabelInfo.labelNameIndex = myPrinter.checkLabelInPrinter();
-				myLabelInfo.isAutoCut = true;
-				myLabelInfo.isEndCut = true;
-				myLabelInfo.isHalfCut = false;
-				myLabelInfo.isSpecialTape = false;
-
-				//label info must be set after setPrinterInfo, it's not in the docs
-				myPrinter.setLabelInfo(myLabelInfo);
-
-
-				try {
-					File outputDir = context.getCacheDir();
-					File outputFile = new File(outputDir.getPath() + "configure.prn");
-
-					FileWriter writer = new FileWriter(outputFile);
-					writer.write(args.optString(0, null));
-					writer.close();
-
-					PrinterStatus status = myPrinter.printFile(outputFile.toString());
-					outputFile.delete();
-
-					String status_code = "" + status.errorCode;
-
-					Log.d(TAG, "PrinterStatus: " + status_code);
-
-					PluginResult result;
-					result = new PluginResult(PluginResult.Status.OK, status_code);
-					callbackctx.sendPluginResult(result);
-
-				} catch (IOException e) {
-					Log.d(TAG, "Temp file action failed: " + e.toString());
-				}
-
-			}
-		});
-	}
+        return false;
+    }
+
+    private NetPrinter[] enumerateNetPrinters() {
+        Printer myPrinter = new Printer();
+        PrinterInfo myPrinterInfo = new PrinterInfo();
+        netPrinters = myPrinter.getNetPrinters(modelName);
+        return netPrinters;
+    }
+
+    private void findNetworkPrinters(final CallbackContext callbackctx) {
+
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try{
+
+                    searched = true;
+
+                    NetPrinter[] netPrinters = enumerateNetPrinters();
+                    int netPrinterCount = netPrinters.length;
+
+                    ArrayList<Map> netPrintersList = null;
+                    if(netPrintersList != null) netPrintersList.clear();
+                    netPrintersList = new ArrayList<Map>();
+
+                    if (netPrinterCount > 0) {
+                        found = true;
+                        Log.d(TAG, "---- network printers found! ----");
+
+                        for (int i = 0; i < netPrinterCount; i++) {
+                            Map<String, String> netPrinter = new HashMap<String, String>();
+
+                            ipAddress = netPrinters[i].ipAddress;
+                            macAddress = netPrinters[i].macAddress;
+
+                            netPrinter.put("ipAddress", netPrinters[i].ipAddress);
+                            netPrinter.put("macAddress", netPrinters[i].macAddress);
+                            netPrinter.put("serNo", netPrinters[i].serNo);
+                            netPrinter.put("nodeName", netPrinters[i].nodeName);
+
+                            netPrintersList.add(netPrinter);
+
+                            Log.d(TAG, 
+                                        " idx:    " + Integer.toString(i)
+                                    + "\n model:  " + netPrinters[i].modelName
+                                    + "\n ip:     " + netPrinters[i].ipAddress
+                                    + "\n mac:    " + netPrinters[i].macAddress
+                                    + "\n serial: " + netPrinters[i].serNo
+                                    + "\n name:   " + netPrinters[i].nodeName
+                                 );
+                        }
+
+                        Log.d(TAG, "---- /network printers found! ----");
+
+                    }else if (netPrinterCount == 0 ) { 
+                        found = false;
+                        Log.d(TAG, "!!!! No network printers found !!!!");
+                    }
+
+                    JSONArray args = new JSONArray();
+                    PluginResult result;
+
+                    Boolean available = netPrinterCount > 0;
+
+                    args.put(available);
+                    args.put(netPrintersList);
+
+                    result = new PluginResult(PluginResult.Status.OK, args);
+
+                    callbackctx.sendPluginResult(result);
+
+                }catch(Exception e){    
+                    e.printStackTrace();
+                }
+
+            }
+
+        });
+
+    }
+
+    public static Bitmap bmpFromBase64(String base64, final CallbackContext callbackctx){
+        try{
+            byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+            return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        }catch(Exception e){    
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+	
+    public Bitmap textAsBitmap(String text, String text1, String text2, String text3, String text4, float textSize, int textColor) {
+        Paint paint = new Paint();
+        paint.setTextSize(textSize);
+        paint.setColor(Color.WHITE);
+        paint.setTextAlign(Paint.Align.LEFT);
+        float baseline = -paint.ascent(); // ascent() is negative
+        int width = (int) (paint.measureText(text) + 0.5f); // round
+        int height = (int) (baseline + paint.descent() + 0.5f);
+        Bitmap image = Bitmap.createBitmap(width+500, height+450, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(image);
+        canvas.drawRect(0, 0, width + 500, height + 450, paint);
+        paint.setColor(textColor);
+        canvas.drawText(text, 0, baseline, paint);
+        canvas.drawText(text1, 0, baseline + 100, paint);
+        canvas.drawText(text2, 0, baseline + 200, paint);
+        canvas.drawText(text3, 0, baseline + 300, paint);
+        canvas.drawText(text4, 0, baseline + 400, paint);
+        return image;
+    }
+	
+
+    private void printViaSDK(final JSONArray args, final CallbackContext callbackctx) {
+        //final Bitmap bitmap = bmpFromBase64(args.optString(0, null), callbackctx);
+
+			final Bitmap bitmap = textAsBitmap(
+				"Termék neve: Zsemle",
+				"Elkészítési idő: 2018.03.26. 00:05",
+				"Olvadási idő: 2018.03.26. 04:05",
+				"Lejárati idő idő: 2018.03.26. 10:05", 
+				"Darab: 5", 
+				80, BLACK
+			);
+
+        //final Bitmap bitmap = bmpFromBase64v2(args.optString(0, null), callbackctx);
+
+        if(!searched){
+            PluginResult result;
+            result = new PluginResult(PluginResult.Status.ERROR, "You must first run findNetworkPrinters() to search the network.");
+            callbackctx.sendPluginResult(result);
+        }
+
+        if(!found){
+            PluginResult result;
+            result = new PluginResult(PluginResult.Status.ERROR, "No printer was found. Aborting.");
+            callbackctx.sendPluginResult(result);
+        }
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try{
+
+                    Printer myPrinter = new Printer();
+                    PrinterInfo myPrinterInfo = new PrinterInfo();
+
+                    myPrinterInfo = myPrinter.getPrinterInfo();
+
+                    Log.d(TAG, myPrinterInfo.toString());
+
+						// https://mariusbelin.files.wordpress.com/2017/02/brother-print-sdk-for-android-manual.pdf
+						// PrinterInfo.Halftone.PATTERNDITHER / ERRORDIFFUSION / THRESHOLD
+						// PrinterInfo.Align.KEFT / RIGHT / CENTER
+						// PrinterInfo.VAlign.TOP / MIDDLE / BOTTOM
+						// PrinterInfo.Margin = int
+
+                    myPrinterInfo.printerModel  = PrinterInfo.Model.QL_810W;
+                    myPrinterInfo.port          = PrinterInfo.Port.NET;
+                    //myPrinterInfo.printMode     = PrinterInfo.PrintMode.ORIGINAL;
+                    myPrinterInfo.orientation   = PrinterInfo.Orientation.PORTRAIT;
+                    myPrinterInfo.printMode     = PrinterInfo.PrintMode.FIT_TO_PAGE;
+                    //myPrinterInfo.orientation   = PrinterInfo.Orientation.LANDSCAPE;
+						  myPrinterInfo.printQuality	= PrinterInfo.PrintQuality.HIGH_RESOLUTION;
+                    myPrinterInfo.numberOfCopies   = 1;
+
+                    myPrinterInfo.paperSize     = PrinterInfo.PaperSize.CUSTOM;
+                    myPrinterInfo.ipAddress     = ipAddress;
+                    myPrinterInfo.macAddress    = macAddress;
+                    myPrinter.setPrinterInfo(myPrinterInfo);
+
+                    LabelInfo myLabelInfo = new LabelInfo();
+
+                    //myLabelInfo.labelNameIndex  = myPrinter.checkLabelInPrinter();
+                    //myLabelInfo.labelNameIndex  = 9; // W62H29
+                    myLabelInfo.labelNameIndex  = LabelInfo.QL700.valueOf("W62H29").ordinal();
+                    myLabelInfo.isAutoCut       = true;
+                    myLabelInfo.isEndCut        = true;
+                    myLabelInfo.isHalfCut       = false;
+                    myLabelInfo.isSpecialTape   = false;
+
+
+                    //label info must be set after setPrinterInfo, it's not in the docs
+                    myPrinter.setLabelInfo(myLabelInfo);
+
+                    String labelWidth = ""+myPrinter.getLabelParam().labelWidth;
+                    String paperWidth = ""+myPrinter.getLabelParam().paperWidth;
+                    Log.d(TAG, "paperWidth = " + paperWidth);
+                    Log.d(TAG, "labelWidth = " + labelWidth);
+                    
+                    PrinterStatus status = myPrinter.printImage(bitmap);
+
+                    //casting to string doesn't work, but this does... wtf Brother
+                    String status_code = ""+status.errorCode;
+
+                    Log.d(TAG, "PrinterStatus: "+status_code);
+
+                    PluginResult result;
+                    result = new PluginResult(PluginResult.Status.OK, status_code);
+                    callbackctx.sendPluginResult(result);
+
+                }catch(Exception e){    
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+
+    private void sendUSBConfig(final JSONArray args, final CallbackContext callbackctx){
+
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+
+                Printer myPrinter = new Printer();
+
+                Context context = cordova.getActivity().getApplicationContext();
+
+                UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+                UsbDevice usbDevice = myPrinter.getUsbDevice(usbManager);
+                if (usbDevice == null) {
+                    Log.d(TAG, "USB device not found");
+                    return;
+                }
+
+                final String ACTION_USB_PERMISSION = "com.threescreens.cordova.plugin.brotherPrinter.USB_PERMISSION";
+
+                PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+                usbManager.requestPermission(usbDevice, permissionIntent);
+
+                final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        String action = intent.getAction();
+                        if (ACTION_USB_PERMISSION.equals(action)) {
+                            synchronized (this) {
+                                if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false))
+                                    Log.d(TAG, "USB permission granted");
+                                else
+                                    Log.d(TAG, "USB permission rejected");
+                            }
+                        }
+                    }
+                };
+
+                context.registerReceiver(mUsbReceiver, new IntentFilter(ACTION_USB_PERMISSION));
+
+                while (true) {
+                    if (!usbManager.hasPermission(usbDevice)) {
+                        usbManager.requestPermission(usbDevice, permissionIntent);
+                    } else {
+                        break; 
+                    }
+
+                    try { 
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) { 
+                        e.printStackTrace();
+                    }
+                }
+
+                PrinterInfo myPrinterInfo = new PrinterInfo();
+
+                myPrinterInfo = myPrinter.getPrinterInfo();
+
+                myPrinterInfo.printerModel  = PrinterInfo.Model.QL_810W;
+                myPrinterInfo.port          = PrinterInfo.Port.USB;
+                myPrinterInfo.paperSize     = PrinterInfo.PaperSize.CUSTOM;
+
+                myPrinter.setPrinterInfo(myPrinterInfo);
+
+                LabelInfo myLabelInfo = new LabelInfo();
+
+                myLabelInfo.labelNameIndex  = myPrinter.checkLabelInPrinter();
+                myLabelInfo.isAutoCut       = true;
+                myLabelInfo.isEndCut        = true;
+                myLabelInfo.isHalfCut       = false;
+                myLabelInfo.isSpecialTape   = false;
+
+                //label info must be set after setPrinterInfo, it's not in the docs
+                myPrinter.setLabelInfo(myLabelInfo);
+
+
+                try {
+                    File outputDir = context.getCacheDir();
+                    File outputFile = new File(outputDir.getPath() + "configure.prn");
+
+                    FileWriter writer = new FileWriter(outputFile);
+                    writer.write(args.optString(0, null));
+                    writer.close();
+
+                    PrinterStatus status = myPrinter.printFile(outputFile.toString());
+                    outputFile.delete();
+
+                    String status_code = ""+status.errorCode;
+
+                    Log.d(TAG, "PrinterStatus: "+status_code);
+
+                    PluginResult result;
+                    result = new PluginResult(PluginResult.Status.OK, status_code);
+                    callbackctx.sendPluginResult(result);
+
+                } catch (IOException e) {
+                    Log.d(TAG, "Temp file action failed: " + e.toString());
+                } 
+
+            }
+        });
+    }
 
 }
