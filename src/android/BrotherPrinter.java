@@ -193,7 +193,7 @@ public class BrotherPrinter extends CordovaPlugin {
 		*/
 
 		int width = 1320;
-		int height = 468;
+		int height = 488;
 		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
 		Canvas canvas = new Canvas(image);
