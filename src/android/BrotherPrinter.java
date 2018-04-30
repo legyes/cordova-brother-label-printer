@@ -27,6 +27,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Picture;
+import android.graphics.Typeface;
 import android.os.Handler;
 import android.util.Base64;
 import android.util.Log;
