@@ -56,6 +56,11 @@ import static android.graphics.Color.BLACK;
 public class BrotherPrinter extends CordovaPlugin {
 
 	String modelName = "QL-810W";
+	int copyCount = 1;
+	boolean autoCut = true;
+	boolean endCut = true;
+	
+	
 	private NetPrinter[] netPrinters;
 
 	private String ipAddress = null;
@@ -180,9 +185,9 @@ public class BrotherPrinter extends CordovaPlugin {
 	}
 
 
-	public Bitmap textAsBitmap(String text, String text1, String text2, String text3, String text4, float textSize, int textColor) {
+	public Bitmap textAsBitmap(String text, String text1, String text2, String text3, String text4, int textColor) {
 		Paint paint = new Paint();
-		paint.setTextSize(textSize);
+		paint.setTextSize(80);
 		paint.setColor(Color.WHITE);
 		paint.setTextAlign(Paint.Align.LEFT);
 		float baseline = -paint.ascent(); // ascent() is negative
@@ -193,7 +198,7 @@ public class BrotherPrinter extends CordovaPlugin {
 		*/
 
 		int width = 1320;
-		int height = 488;
+		int height = 495;
 		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
 		Canvas canvas = new Canvas(image);
@@ -206,7 +211,8 @@ public class BrotherPrinter extends CordovaPlugin {
 		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
 		canvas.drawText(text1, 0, baseline + 100, paint);
 		canvas.drawText(text2, 0, baseline + 200, paint);
-		canvas.drawText(text3, 0, baseline + 300, paint);
+		canvas.drawText(text3, 0, baseline + 330, paint);
+		paint.setTextSize(60);
 		canvas.drawText(text4, 0, baseline + 400, paint);
 		return image;
 	}
@@ -215,7 +221,7 @@ public class BrotherPrinter extends CordovaPlugin {
 	private void printViaSDK(final JSONArray args, final CallbackContext callbackctx) {
 		//final Bitmap bitmap = bmpFromBase64(args.optString(0, null), callbackctx);
 		JSONObject j = new JSONObject();
-
+		
 		try {
 			j = new JSONObject(args.optJSONArray(0).optString(0));
 		} catch (JSONException e) {
@@ -231,11 +237,13 @@ public class BrotherPrinter extends CordovaPlugin {
 			j.optString("row3"),
 			j.optString("row4"),
 			j.optString("row5"),
-			80, BLACK
+			BLACK
 		);
 
-
-
+		copyCount	= Integer.parseInt(j.optString("copy").toString());
+		autoCut		= Boolean.parseBoolean(j.optString("autoCut").toString());
+		endCut		= Boolean.parseBoolean(j.optString("endCut").toString());
+		
 		if (!searched) {
 			final PluginResult result;
 			result = new PluginResult(PluginResult.Status.ERROR, "You must first run findNetworkPrinters() to search the network.");
@@ -251,7 +259,7 @@ public class BrotherPrinter extends CordovaPlugin {
 		cordova.getThreadPool().execute(new Runnable() {
 			public void run() {
 				try {
-
+							
 					Printer myPrinter = new Printer();
 					PrinterInfo myPrinterInfo = new PrinterInfo();
 
@@ -273,7 +281,7 @@ public class BrotherPrinter extends CordovaPlugin {
 					//myPrinterInfo.orientation   = PrinterInfo.Orientation.LANDSCAPE;
 					//myPrinterInfo.printQuality	= PrinterInfo.PrintQuality.HIGH_RESOLUTION;
 					myPrinterInfo.printQuality = PrinterInfo.PrintQuality.NORMAL;
-					myPrinterInfo.numberOfCopies = 1;
+					myPrinterInfo.numberOfCopies = copyCount;
 
 					myPrinterInfo.paperSize = PrinterInfo.PaperSize.CUSTOM;
 					myPrinterInfo.ipAddress = ipAddress;
@@ -285,8 +293,8 @@ public class BrotherPrinter extends CordovaPlugin {
 					//myLabelInfo.labelNameIndex  = myPrinter.checkLabelInPrinter();
 					//myLabelInfo.labelNameIndex  = 9; // W62H29
 					myLabelInfo.labelNameIndex = LabelInfo.QL700.valueOf("W62H29").ordinal();
-					myLabelInfo.isAutoCut = true;
-					myLabelInfo.isEndCut = true;
+					myLabelInfo.isAutoCut = autoCut;
+					myLabelInfo.isEndCut = endCut;
 					myLabelInfo.isHalfCut = false;
 					myLabelInfo.isSpecialTape = false;
 
