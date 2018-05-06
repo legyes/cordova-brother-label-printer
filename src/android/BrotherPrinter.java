@@ -59,7 +59,8 @@ public class BrotherPrinter extends CordovaPlugin {
 	int copyCount = 1;
 	boolean autoCut = true;
 	boolean endCut = true;
-	
+	String labelType = "normal";
+	Bitmap printBitmap;
 	
 	private NetPrinter[] netPrinters;
 
@@ -102,76 +103,79 @@ public class BrotherPrinter extends CordovaPlugin {
 	}
 
 	private void findNetworkPrinters(final CallbackContext callbackctx) {
-
-		cordova.getThreadPool().execute(new Runnable() {
-			public void run() {
-				try {
-
-					searched = true;
-
-					NetPrinter[] netPrinters = enumerateNetPrinters();
-					int netPrinterCount = netPrinters.length;
-
-					JSONArray jArray = new JSONArray();
-					JSONObject jItem = new JSONObject();
-
-					if (netPrinterCount > 0) {
-						found = true;
-						Log.d(TAG, "---- network printers found! ----");
-
-						for (int i = 0; i < netPrinterCount; i++) {
-							ipAddress = netPrinters[i].ipAddress;
-							macAddress = netPrinters[i].macAddress;
-
-							jArray = new JSONArray();
-							jItem = new JSONObject();
-
-							jItem.put("index", Integer.toString(i));
-							jItem.put("modelName", netPrinters[i].modelName);
-							jItem.put("ipAddress", netPrinters[i].ipAddress);
-							jItem.put("macAddress", netPrinters[i].macAddress);
-							jItem.put("serNo", netPrinters[i].serNo);
-							jItem.put("nodeName", netPrinters[i].nodeName);
-							
-							jArray.put(jItem);
-
-							Log.d(TAG,
-								" idx:    " + Integer.toString(i) +
-								"\n model:  " + netPrinters[i].modelName +
-								"\n ip:     " + netPrinters[i].ipAddress +
-								"\n mac:    " + netPrinters[i].macAddress +
-								"\n serial: " + netPrinters[i].serNo +
-								"\n name:   " + netPrinters[i].nodeName
-							);
+		try {
+			cordova.getThreadPool().execute(new Runnable() {
+				public void run() {
+					try {
+	
+						searched = true;
+	
+						NetPrinter[] netPrinters = enumerateNetPrinters();
+						int netPrinterCount = netPrinters.length;
+	
+						JSONArray jArray = new JSONArray();
+						JSONObject jItem = new JSONObject();
+	
+						if (netPrinterCount > 0) {
+							found = true;
+							Log.d(TAG, "---- network printers found! ----");
+	
+							for (int i = 0; i < netPrinterCount; i++) {
+								ipAddress = netPrinters[i].ipAddress;
+								macAddress = netPrinters[i].macAddress;
+	
+								jArray = new JSONArray();
+								jItem = new JSONObject();
+	
+								jItem.put("index", Integer.toString(i));
+								jItem.put("modelName", netPrinters[i].modelName);
+								jItem.put("ipAddress", netPrinters[i].ipAddress);
+								jItem.put("macAddress", netPrinters[i].macAddress);
+								jItem.put("serNo", netPrinters[i].serNo);
+								jItem.put("nodeName", netPrinters[i].nodeName);
+								
+								jArray.put(jItem);
+	
+								Log.d(TAG,
+									" idx:    " + Integer.toString(i) +
+									"\n model:  " + netPrinters[i].modelName +
+									"\n ip:     " + netPrinters[i].ipAddress +
+									"\n mac:    " + netPrinters[i].macAddress +
+									"\n serial: " + netPrinters[i].serNo +
+									"\n name:   " + netPrinters[i].nodeName
+								);
+							}
+	
+							Log.d(TAG, "---- /network printers found! ----");
+	
+						} else if (netPrinterCount == 0) {
+							found = false;
+							Log.d(TAG, "!!!! No network printers found !!!!");
 						}
-
-						Log.d(TAG, "---- /network printers found! ----");
-
-					} else if (netPrinterCount == 0) {
-						found = false;
-						Log.d(TAG, "!!!! No network printers found !!!!");
+	
+						JSONArray args = new JSONArray();
+						PluginResult result;
+	
+						Boolean available = netPrinterCount > 0;
+	
+						args.put(available);
+						args.put(jArray);
+	
+						result = new PluginResult(PluginResult.Status.OK, args);
+	
+						callbackctx.sendPluginResult(result);
+	
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-
-					JSONArray args = new JSONArray();
-					PluginResult result;
-
-					Boolean available = netPrinterCount > 0;
-
-					args.put(available);
-					args.put(jArray);
-
-					result = new PluginResult(PluginResult.Status.OK, args);
-
-					callbackctx.sendPluginResult(result);
-
-				} catch (Exception e) {
-					e.printStackTrace();
+	
 				}
-
-			}
-
-		});
-
+	
+			});
+		}
+		catch(Exception e){
+			// TODO
+		}
 	}
 
 	public static Bitmap bmpFromBase64(String base64, final CallbackContext callbackctx) {
@@ -184,8 +188,7 @@ public class BrotherPrinter extends CordovaPlugin {
 		}
 	}
 
-
-	public Bitmap textAsBitmap(String text, String text1, String text2, String text3, String text4, int textColor) {
+	public Bitmap textAsBitmap(String text, String text1, String text2, String text3, String text4) {
 		Paint paint = new Paint();
 		paint.setTextSize(80);
 		paint.setColor(Color.WHITE);
@@ -205,126 +208,277 @@ public class BrotherPrinter extends CordovaPlugin {
 		//canvas.drawRect(0, 0, width + 500, height + 450, paint);
 		canvas.drawRect(0, 0, width, height, paint);
 
-		paint.setColor(textColor);
+		paint.setColor(Color.BLACK);
 		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 		canvas.drawText(text, 0, baseline, paint);
 		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
 		canvas.drawText(text1, 0, baseline + 100, paint);
 		canvas.drawText(text2, 0, baseline + 200, paint);
-		canvas.drawText(text3, 0, baseline + 330, paint);
-		paint.setTextSize(60);
+		canvas.drawText(text3, 0, baseline + 300, paint);
 		canvas.drawText(text4, 0, baseline + 400, paint);
 		return image;
 	}
 
+	public Bitmap labelTypeNormalBitmap(String row1Title, String row2Title, String row2Text, String row3Title, String row3Text) {
+		Paint paint = new Paint();
+		paint.setTextSize(80);
+		paint.setColor(Color.WHITE);
+		paint.setTextAlign(Paint.Align.LEFT);
+		float baseline = -paint.ascent();
 
-	private void printViaSDK(final JSONArray args, final CallbackContext callbackctx) {
-		//final Bitmap bitmap = bmpFromBase64(args.optString(0, null), callbackctx);
-		JSONObject j = new JSONObject();
+		int width = 1320;
+		int height = 495;
+		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+		Canvas canvas = new Canvas(image);
+
+		canvas.drawRect(0, 0, width, height, paint);
+
+		paint.setColor(Color.BLACK);
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+		canvas.drawText(row1Title, 0, baseline, paint);
+
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+
+		canvas.drawText(row2Title, 0, baseline + 100, paint);
+		canvas.drawText(row2Text, 500, baseline + 100, paint);
+
+		canvas.drawText(row3Title, 0, baseline + 200, paint);
 		
-		try {
-			j = new JSONObject(args.optJSONArray(0).optString(0));
-		} catch (JSONException e) {
-			final PluginResult result;
-			result = new PluginResult(PluginResult.Status.ERROR, "JSON error");
-			callbackctx.sendPluginResult(result);
-		}
+		paint.setUnderlineText(true);
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+		canvas.drawText(row3Text, 500, baseline + 200, paint);
 
-
-		final Bitmap bitmap = textAsBitmap(
-			j.optString("row1"),
-			j.optString("row2"),
-			j.optString("row3"),
-			j.optString("row4"),
-			j.optString("row5"),
-			BLACK
-		);
-
-		copyCount	= Integer.parseInt(j.optString("copy").toString());
-		autoCut		= Boolean.parseBoolean(j.optString("autoCut").toString());
-		endCut		= Boolean.parseBoolean(j.optString("endCut").toString());
-		
-		if (!searched) {
-			final PluginResult result;
-			result = new PluginResult(PluginResult.Status.ERROR, "You must first run findNetworkPrinters() to search the network.");
-			callbackctx.sendPluginResult(result);
-		}
-
-		if (!found) {
-			final PluginResult result;
-			result = new PluginResult(PluginResult.Status.ERROR, "No printer was found. Aborting.");
-			callbackctx.sendPluginResult(result);
-		}
-
-		cordova.getThreadPool().execute(new Runnable() {
-			public void run() {
-				try {
-							
-					Printer myPrinter = new Printer();
-					PrinterInfo myPrinterInfo = new PrinterInfo();
-
-					myPrinterInfo = myPrinter.getPrinterInfo();
-
-					Log.d(TAG, myPrinterInfo.toString());
-
-					// https://mariusbelin.files.wordpress.com/2017/02/brother-print-sdk-for-android-manual.pdf
-					// PrinterInfo.Halftone.PATTERNDITHER / ERRORDIFFUSION / THRESHOLD
-					// PrinterInfo.Align.KEFT / RIGHT / CENTER
-					// PrinterInfo.VAlign.TOP / MIDDLE / BOTTOM
-					// PrinterInfo.Margin = int
-
-					myPrinterInfo.printerModel = PrinterInfo.Model.QL_810W;
-					myPrinterInfo.port = PrinterInfo.Port.NET;
-					//myPrinterInfo.printMode     = PrinterInfo.PrintMode.ORIGINAL;
-					myPrinterInfo.orientation = PrinterInfo.Orientation.PORTRAIT;
-					myPrinterInfo.printMode = PrinterInfo.PrintMode.FIT_TO_PAGE;
-					//myPrinterInfo.orientation   = PrinterInfo.Orientation.LANDSCAPE;
-					//myPrinterInfo.printQuality	= PrinterInfo.PrintQuality.HIGH_RESOLUTION;
-					myPrinterInfo.printQuality = PrinterInfo.PrintQuality.NORMAL;
-					myPrinterInfo.numberOfCopies = copyCount;
-
-					myPrinterInfo.paperSize = PrinterInfo.PaperSize.CUSTOM;
-					myPrinterInfo.ipAddress = ipAddress;
-					myPrinterInfo.macAddress = macAddress;
-					myPrinter.setPrinterInfo(myPrinterInfo);
-
-					LabelInfo myLabelInfo = new LabelInfo();
-
-					//myLabelInfo.labelNameIndex  = myPrinter.checkLabelInPrinter();
-					//myLabelInfo.labelNameIndex  = 9; // W62H29
-					myLabelInfo.labelNameIndex = LabelInfo.QL700.valueOf("W62H29").ordinal();
-					myLabelInfo.isAutoCut = autoCut;
-					myLabelInfo.isEndCut = endCut;
-					myLabelInfo.isHalfCut = false;
-					myLabelInfo.isSpecialTape = false;
-
-
-					//label info must be set after setPrinterInfo, it's not in the docs
-					myPrinter.setLabelInfo(myLabelInfo);
-
-					String labelWidth = "" + myPrinter.getLabelParam().labelWidth;
-					String paperWidth = "" + myPrinter.getLabelParam().paperWidth;
-					Log.d(TAG, "paperWidth = " + paperWidth);
-					Log.d(TAG, "labelWidth = " + labelWidth);
-
-					PrinterStatus status = myPrinter.printImage(bitmap);
-
-					//casting to string doesn't work, but this does... wtf Brother
-					String status_code = "" + status.errorCode;
-
-					Log.d(TAG, "PrinterStatus: " + status_code);
-
-					final PluginResult result;
-					result = new PluginResult(PluginResult.Status.OK, status_code);
-					callbackctx.sendPluginResult(result);
-
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
+		return image;
 	}
+	
+	public Bitmap labelTypeFrozenBitmap(String row1Title, String row2Title, String row2Text, String row3Title, String row3Text, String row4Title, String row4Text) {
+		Paint paint = new Paint();
+		paint.setTextSize(80);
+		paint.setColor(Color.WHITE);
+		paint.setTextAlign(Paint.Align.LEFT);
+		float baseline = -paint.ascent();
 
+		int width = 1320;
+		int height = 495;
+		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+		Canvas canvas = new Canvas(image);
+
+		canvas.drawRect(0, 0, width, height, paint);
+
+		paint.setColor(Color.BLACK);
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+		canvas.drawText(row1Title, 0, baseline, paint);
+
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+
+		canvas.drawText(row2Title, 0, baseline + 100, paint);
+		canvas.drawText(row2Text, 500, baseline + 100, paint);
+
+		canvas.drawText(row3Title, 0, baseline + 200, paint);
+		
+		paint.setUnderlineText(false);
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+		canvas.drawText(row3Text, 500, baseline + 200, paint);
+
+		paint.setUnderlineText(true);
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+		
+		canvas.drawText(row4Title, 0, baseline + 300, paint);
+		canvas.drawText(row4Text, 500, baseline + 300, paint);
+		
+		return image;
+	}
+	
+	public Bitmap labelTypeMeatBitmap(String row1Title, String row2Title, String row2Text, String row3Title, String row3Text, String row4Text, String row5Text) {
+		Paint paint = new Paint();
+		paint.setTextSize(80);
+		paint.setColor(Color.WHITE);
+		paint.setTextAlign(Paint.Align.LEFT);
+		float baseline = -paint.ascent();
+
+		int width = 1320;
+		int height = 525;
+		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+		Canvas canvas = new Canvas(image);
+
+		canvas.drawRect(0, 0, width, height, paint);
+
+		paint.setColor(Color.BLACK);
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+		canvas.drawText(row1Title, 0, baseline, paint);
+
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+
+		canvas.drawText(row2Title, 0, baseline + 100, paint);
+		canvas.drawText(row2Text, 500, baseline + 100, paint);
+
+		canvas.drawText(row3Title, 0, baseline + 200, paint);
+		
+		paint.setUnderlineText(true);
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+		canvas.drawText(row3Text, 500, baseline + 200, paint);
+
+		paint.setUnderlineText(false);
+		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+		canvas.drawText("_____ " + row4Text + "    ________________________", 0, baseline + 360, paint);
+		
+		paint.setTextSize(60);
+		canvas.drawText(row5Text, 700, baseline + 430, paint);
+		
+		return image;
+	}
+	
+	private void printViaSDK(final JSONArray args, final CallbackContext callbackctx) {
+		try {
+		
+			JSONObject j = new JSONObject();
+			
+			try {
+				j = new JSONObject(args.optJSONArray(0).optString(0));
+			} catch (JSONException e) {
+				final PluginResult result;
+				result = new PluginResult(PluginResult.Status.ERROR, "JSON error");
+				callbackctx.sendPluginResult(result);
+			}
+			
+			copyCount	= Integer.parseInt(j.optString("copy").toString());
+			autoCut		= Boolean.parseBoolean(j.optString("autoCut").toString());
+			endCut		= Boolean.parseBoolean(j.optString("endCut").toString());
+			labelType	= j.optString("labelType").toString();
+			
+			if ( labelType.equalsIgnoreCase("meat") ) {
+				printBitmap = labelTypeMeatBitmap(
+					j.optString("text1"),
+					j.optString("text2"),
+					j.optString("text3"),
+					j.optString("text4"),
+					j.optString("text5"),
+					j.optString("text6"),
+					j.optString("text7")
+				);
+			}
+			else if ( labelType.equalsIgnoreCase("frozen") ) {
+				printBitmap = labelTypeFrozenBitmap(
+					j.optString("text1"),
+					j.optString("text2"),
+					j.optString("text3"),
+					j.optString("text4"),
+					j.optString("text5"),
+					j.optString("text6"),
+					j.optString("text7")
+				);
+			}
+			else if ( labelType.equalsIgnoreCase("custom") ){
+				printBitmap = textAsBitmap(
+					j.optString("text1"),
+					j.optString("text2"),
+					j.optString("text3"),
+					j.optString("text4"),
+					j.optString("text5")
+				);
+			}
+			else {
+				printBitmap = labelTypeNormalBitmap(
+					j.optString("text1"),
+					j.optString("text2"),
+					j.optString("text3"),
+					j.optString("text4"),
+					j.optString("text5")
+				);
+			}
+			
+			final Bitmap bitmap = printBitmap;
+			
+			if (!searched) {
+				final PluginResult result;
+				result = new PluginResult(PluginResult.Status.ERROR, "You must first run findNetworkPrinters() to search the network.");
+				callbackctx.sendPluginResult(result);
+			}
+	
+			if (!found) {
+				final PluginResult result;
+				result = new PluginResult(PluginResult.Status.ERROR, "No printer was found. Aborting.");
+				callbackctx.sendPluginResult(result);
+			}
+	
+			cordova.getThreadPool().execute(new Runnable() {
+				public void run() {
+					try {
+								
+						Printer myPrinter = new Printer();
+						PrinterInfo myPrinterInfo = new PrinterInfo();
+	
+						myPrinterInfo = myPrinter.getPrinterInfo();
+	
+						Log.d(TAG, myPrinterInfo.toString());
+	
+						// https://mariusbelin.files.wordpress.com/2017/02/brother-print-sdk-for-android-manual.pdf
+						// PrinterInfo.Halftone.PATTERNDITHER / ERRORDIFFUSION / THRESHOLD
+						// PrinterInfo.Align.KEFT / RIGHT / CENTER
+						// PrinterInfo.VAlign.TOP / MIDDLE / BOTTOM
+						// PrinterInfo.Margin = int
+	
+						myPrinterInfo.printerModel = PrinterInfo.Model.QL_810W;
+						myPrinterInfo.port = PrinterInfo.Port.NET;
+						//myPrinterInfo.printMode     = PrinterInfo.PrintMode.ORIGINAL;
+						myPrinterInfo.orientation = PrinterInfo.Orientation.PORTRAIT;
+						myPrinterInfo.printMode = PrinterInfo.PrintMode.FIT_TO_PAGE;
+						//myPrinterInfo.orientation   = PrinterInfo.Orientation.LANDSCAPE;
+						//myPrinterInfo.printQuality	= PrinterInfo.PrintQuality.HIGH_RESOLUTION;
+						myPrinterInfo.printQuality = PrinterInfo.PrintQuality.NORMAL;
+						myPrinterInfo.numberOfCopies = copyCount;
+	
+						myPrinterInfo.paperSize = PrinterInfo.PaperSize.CUSTOM;
+						myPrinterInfo.ipAddress = ipAddress;
+						myPrinterInfo.macAddress = macAddress;
+						myPrinter.setPrinterInfo(myPrinterInfo);
+	
+						LabelInfo myLabelInfo = new LabelInfo();
+	
+						//myLabelInfo.labelNameIndex  = myPrinter.checkLabelInPrinter();
+						//myLabelInfo.labelNameIndex  = 9; // W62H29
+						myLabelInfo.labelNameIndex = LabelInfo.QL700.valueOf("W62H29").ordinal();
+						myLabelInfo.isAutoCut = autoCut;
+						myLabelInfo.isEndCut = endCut;
+						myLabelInfo.isHalfCut = false;
+						myLabelInfo.isSpecialTape = false;
+	
+	
+						//label info must be set after setPrinterInfo, it's not in the docs
+						myPrinter.setLabelInfo(myLabelInfo);
+	
+						String labelWidth = "" + myPrinter.getLabelParam().labelWidth;
+						String paperWidth = "" + myPrinter.getLabelParam().paperWidth;
+						Log.d(TAG, "paperWidth = " + paperWidth);
+						Log.d(TAG, "labelWidth = " + labelWidth);
+	
+						PrinterStatus status = myPrinter.printImage(bitmap);
+	
+						//casting to string doesn't work, but this does... wtf Brother
+						String status_code = "" + status.errorCode;
+	
+						Log.d(TAG, "PrinterStatus: " + status_code);
+	
+						final PluginResult result;
+						result = new PluginResult(PluginResult.Status.OK, status_code);
+						callbackctx.sendPluginResult(result);
+	
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+		}
+		catch(Exception e){
+			// TODO
+		}
+	}
 
 	private void sendUSBConfig(final JSONArray args, final CallbackContext callbackctx) {
 
