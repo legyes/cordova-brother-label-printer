@@ -284,10 +284,9 @@ public class BrotherPrinter extends CordovaPlugin {
 		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
 		canvas.drawText(row3Text, 500, baseline + 200, paint);
 
+		canvas.drawText(row4Title, 0, baseline + 300, paint);
 		paint.setUnderlineText(true);
 		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-		
-		canvas.drawText(row4Title, 0, baseline + 300, paint);
 		canvas.drawText(row4Text, 500, baseline + 300, paint);
 		
 		return image;
