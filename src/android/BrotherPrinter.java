@@ -60,6 +60,7 @@ public class BrotherPrinter extends CordovaPlugin {
 	boolean autoCut = true;
 	boolean endCut = true;
 	String labelType = "normal";
+	int printQuality = 0;
 	Bitmap printBitmap;
 	
 	private NetPrinter[] netPrinters;
@@ -350,6 +351,7 @@ public class BrotherPrinter extends CordovaPlugin {
 			autoCut		= Boolean.parseBoolean(j.optString("autoCut").toString());
 			endCut		= Boolean.parseBoolean(j.optString("endCut").toString());
 			labelType	= j.optString("labelType").toString();
+			printQuality	= Integer.parseInt(j.optString("printQuality").toString());
 			
 			if ( labelType.equalsIgnoreCase("meat") ) {
 				printBitmap = labelTypeMeatBitmap(
@@ -430,7 +432,15 @@ public class BrotherPrinter extends CordovaPlugin {
 						myPrinterInfo.printMode = PrinterInfo.PrintMode.FIT_TO_PAGE;
 						//myPrinterInfo.orientation   = PrinterInfo.Orientation.LANDSCAPE;
 						//myPrinterInfo.printQuality	= PrinterInfo.PrintQuality.HIGH_RESOLUTION;
-						myPrinterInfo.printQuality = PrinterInfo.PrintQuality.NORMAL;
+						//myPrinterInfo.printQuality = PrinterInfo.PrintQuality.NORMAL;
+						
+						switch(printQuality) {
+							case 1: myPrinterInfo.printQuality = PrinterInfo.PrintQuality.DOUBLE_SPEED; break;
+							case 2: myPrinterInfo.printQuality = PrinterInfo.PrintQuality.LOW_RESOLUTION; break;
+							case 3: myPrinterInfo.printQuality = PrinterInfo.PrintQuality.HIGH_RESOLUTION; break;
+							default: myPrinterInfo.printQuality = PrinterInfo.PrintQuality.NORMAL; break;
+						}
+						
 						myPrinterInfo.numberOfCopies = copyCount;
 	
 						myPrinterInfo.paperSize = PrinterInfo.PaperSize.CUSTOM;
