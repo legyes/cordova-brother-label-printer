@@ -60,6 +60,7 @@ public class BrotherPrinter extends CordovaPlugin {
 	boolean autoCut = true;
 	boolean endCut = true;
 	String labelType = "normal";
+	String paperType = "W62H29";
 	int printQuality = 0;
 	Bitmap printBitmap;
 	
@@ -351,6 +352,7 @@ public class BrotherPrinter extends CordovaPlugin {
 			autoCut		= Boolean.parseBoolean(j.optString("autoCut").toString());
 			endCut		= Boolean.parseBoolean(j.optString("endCut").toString());
 			labelType	= j.optString("labelType").toString();
+			paperType	= j.optString("paperType").toString();
 			printQuality	= Integer.parseInt(j.optString("printQuality").toString());
 			
 			if ( labelType.equalsIgnoreCase("meat") ) {
@@ -452,7 +454,9 @@ public class BrotherPrinter extends CordovaPlugin {
 	
 						//myLabelInfo.labelNameIndex  = myPrinter.checkLabelInPrinter();
 						//myLabelInfo.labelNameIndex  = 9; // W62H29
-						myLabelInfo.labelNameIndex = LabelInfo.QL700.valueOf("W62H29").ordinal();
+						myLabelInfo.labelNameIndex = LabelInfo.QL700.valueOf(paperType).ordinal();
+						//myLabelInfo.labelNameIndex = LabelInfo.QL700.valueOf("W62H29").ordinal();
+						//myLabelInfo.labelNameIndex = LabelInfo.QL700.valueOf("W62").ordinal();
 						myLabelInfo.isAutoCut = autoCut;
 						myLabelInfo.isEndCut = endCut;
 						myLabelInfo.isHalfCut = false;
