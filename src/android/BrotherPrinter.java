@@ -55,7 +55,7 @@ import static android.graphics.Color.BLACK;
 
 public class BrotherPrinter extends CordovaPlugin {
 
-	String modelName = "QL-820NWB";
+	String modelName = "QL-810W";
 	int copyCount = 1;
 	boolean autoCut = true;
 	boolean endCut = true;
@@ -80,7 +80,7 @@ public class BrotherPrinter extends CordovaPlugin {
 	public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
 
 		if ("findNetworkPrinters".equals(action)) {
-			findNetworkPrinters(callbackContext);
+			findNetworkPrinters(args, callbackContext);
 			return true;
 		}
 
@@ -104,15 +104,27 @@ public class BrotherPrinter extends CordovaPlugin {
 		return netPrinters;
 	}
 
-	private void findNetworkPrinters(String printerModelName, final CallbackContext callbackctx) {
+	private void findNetworkPrinters(final JSONArray args, final CallbackContext callbackctx) {
 		try {
 			cordova.getThreadPool().execute(new Runnable() {
 				public void run() {
 					try {
 	
 						searched = true;
-	
-						NetPrinter[] netPrinters = enumerateNetPrinters(printerModelName);
+
+						JSONObject j = new JSONObject();
+						
+						try {
+							j = new JSONObject(args.optJSONArray(0).optString(0));
+						} catch (JSONException e) {
+							final PluginResult result;
+							result = new PluginResult(PluginResult.Status.ERROR, "JSON error");
+							callbackctx.sendPluginResult(result);
+						}
+
+						modelName	= j.optString("modelName").toString();
+
+						NetPrinter[] netPrinters = enumerateNetPrinters(modelName);
 						int netPrinterCount = netPrinters.length;
 	
 						JSONArray jArray = new JSONArray();
@@ -434,8 +446,11 @@ public class BrotherPrinter extends CordovaPlugin {
 						// PrinterInfo.Align.KEFT / RIGHT / CENTER
 						// PrinterInfo.VAlign.TOP / MIDDLE / BOTTOM
 						// PrinterInfo.Margin = int
-	
-						myPrinterInfo.printerModel = PrinterInfo.Model.QL_820NWB;
+
+						if(modelName == "QL-820NWB") myPrinterInfo.printerModel = PrinterInfo.Model.QL_820NWB;
+						else myPrinterInfo.printerModel = PrinterInfo.Model.QL_810W;
+
+						//myPrinterInfo.printerModel = PrinterInfo.Model.QL_820NWB;
 						myPrinterInfo.port = PrinterInfo.Port.NET;
 						//myPrinterInfo.printMode     = PrinterInfo.PrintMode.ORIGINAL;
 						myPrinterInfo.orientation = PrinterInfo.Orientation.PORTRAIT;
