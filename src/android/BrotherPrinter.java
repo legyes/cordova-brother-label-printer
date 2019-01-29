@@ -55,7 +55,7 @@ import static android.graphics.Color.BLACK;
 
 public class BrotherPrinter extends CordovaPlugin {
 
-	String modelName = "QL-810W";
+	String modelName = "QL-820NWB";
 	int copyCount = 1;
 	boolean autoCut = true;
 	boolean endCut = true;
@@ -97,14 +97,14 @@ public class BrotherPrinter extends CordovaPlugin {
 		return false;
 	}
 
-	private NetPrinter[] enumerateNetPrinters() {
+	private NetPrinter[] enumerateNetPrinters(String printerModelName) {
 		Printer myPrinter = new Printer();
 		PrinterInfo myPrinterInfo = new PrinterInfo();
-		netPrinters = myPrinter.getNetPrinters(modelName);
+		netPrinters = myPrinter.getNetPrinters(printerModelName);
 		return netPrinters;
 	}
 
-	private void findNetworkPrinters(final CallbackContext callbackctx) {
+	private void findNetworkPrinters(String printerModelName, final CallbackContext callbackctx) {
 		try {
 			cordova.getThreadPool().execute(new Runnable() {
 				public void run() {
@@ -112,7 +112,7 @@ public class BrotherPrinter extends CordovaPlugin {
 	
 						searched = true;
 	
-						NetPrinter[] netPrinters = enumerateNetPrinters();
+						NetPrinter[] netPrinters = enumerateNetPrinters(printerModelName);
 						int netPrinterCount = netPrinters.length;
 	
 						JSONArray jArray = new JSONArray();
@@ -225,11 +225,12 @@ public class BrotherPrinter extends CordovaPlugin {
 		Paint paint = new Paint();
 		paint.setTextSize(80);
 		paint.setColor(Color.WHITE);
+		//paint.setStyle(Paint.Style.FILL);
 		paint.setTextAlign(Paint.Align.LEFT);
-		float baseline = -paint.ascent();
 
+		float baseline = -paint.ascent();
 		int width = 1320;
-		int height = 495;
+		int height = 290;
 		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
 		Canvas canvas = new Canvas(image);
@@ -242,7 +243,7 @@ public class BrotherPrinter extends CordovaPlugin {
 		canvas.drawText(row1Title, 0, baseline, paint);
 
 		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
-
+		
 		canvas.drawText(row2Title, 0, baseline + 100, paint);
 		canvas.drawText(row2Text, 500, baseline + 100, paint);
 
@@ -252,6 +253,13 @@ public class BrotherPrinter extends CordovaPlugin {
 		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 		canvas.drawText(row3Text, 500, baseline + 200, paint);
 
+		/*
+		paint.setStrokeWidth(10);
+		paint.setColor(Color.BLACK);
+		paint.setStyle(Paint.Style.STROKE);
+		// BORDER
+		canvas.drawRect(0, 0, width, height, paint);		
+		*/		
 		return image;
 	}
 	
@@ -263,13 +271,13 @@ public class BrotherPrinter extends CordovaPlugin {
 		float baseline = -paint.ascent();
 
 		int width = 1320;
-		int height = 495;
+		int height = 400;
 		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
 		Canvas canvas = new Canvas(image);
 
 		canvas.drawRect(0, 0, width, height, paint);
-
+		
 		paint.setColor(Color.BLACK);
 		paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 
@@ -302,7 +310,7 @@ public class BrotherPrinter extends CordovaPlugin {
 		float baseline = -paint.ascent();
 
 		int width = 1320;
-		int height = 525;
+		int height = 505;
 		Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
 		Canvas canvas = new Canvas(image);
@@ -427,14 +435,20 @@ public class BrotherPrinter extends CordovaPlugin {
 						// PrinterInfo.VAlign.TOP / MIDDLE / BOTTOM
 						// PrinterInfo.Margin = int
 	
-						myPrinterInfo.printerModel = PrinterInfo.Model.QL_810W;
+						myPrinterInfo.printerModel = PrinterInfo.Model.QL_820NWB;
 						myPrinterInfo.port = PrinterInfo.Port.NET;
 						//myPrinterInfo.printMode     = PrinterInfo.PrintMode.ORIGINAL;
 						myPrinterInfo.orientation = PrinterInfo.Orientation.PORTRAIT;
 						myPrinterInfo.printMode = PrinterInfo.PrintMode.FIT_TO_PAGE;
+						myPrinterInfo.halftone = PrinterInfo.Halftone.PATTERNDITHER;
+						//myPrinterInfo.trimTapeAfterData = false;
 						//myPrinterInfo.orientation   = PrinterInfo.Orientation.LANDSCAPE;
-						//myPrinterInfo.printQuality	= PrinterInfo.PrintQuality.HIGH_RESOLUTION;
-						//myPrinterInfo.printQuality = PrinterInfo.PrintQuality.NORMAL;
+
+						myPrinterInfo.align = PrinterInfo.Align.CENTER;
+						myPrinterInfo.valign = PrinterInfo.VAlign.MIDDLE;
+						
+						/*myPrinterInfo.checkPrintEnd = PrinterInfo.CheckPrintEnd.CPE_NO_CHECK;*/
+						/* myPrinterInfo.thresholdingValue = 220; */
 						
 						switch(printQuality) {
 							case 1: myPrinterInfo.printQuality = PrinterInfo.PrintQuality.DOUBLE_SPEED; break;
@@ -445,7 +459,7 @@ public class BrotherPrinter extends CordovaPlugin {
 						
 						myPrinterInfo.numberOfCopies = copyCount;
 	
-						myPrinterInfo.paperSize = PrinterInfo.PaperSize.CUSTOM;
+						/* myPrinterInfo.paperSize = PrinterInfo.PaperSize.CUSTOM;*/
 						myPrinterInfo.ipAddress = ipAddress;
 						myPrinterInfo.macAddress = macAddress;
 						myPrinter.setPrinterInfo(myPrinterInfo);
@@ -472,7 +486,12 @@ public class BrotherPrinter extends CordovaPlugin {
 						Log.d(TAG, "labelWidth = " + labelWidth);
 	
 						PrinterStatus status = myPrinter.printImage(bitmap);
-	
+						/*
+						Boolean val= myPrinter.startPTTPrint(3, null);
+						myPrinter.replaceText("asd");
+						
+						PrinterStatus status=myPrinter.flushPTTPrint();//ERROR thrown here
+						*/
 						//casting to string doesn't work, but this does... wtf Brother
 						String status_code = "" + status.errorCode;
 	
@@ -549,7 +568,7 @@ public class BrotherPrinter extends CordovaPlugin {
 
 				myPrinterInfo = myPrinter.getPrinterInfo();
 
-				myPrinterInfo.printerModel = PrinterInfo.Model.QL_810W;
+				myPrinterInfo.printerModel = PrinterInfo.Model.QL_820NWB;
 				myPrinterInfo.port = PrinterInfo.Port.USB;
 				myPrinterInfo.paperSize = PrinterInfo.PaperSize.CUSTOM;
 
