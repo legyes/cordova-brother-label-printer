@@ -447,7 +447,7 @@ public class BrotherPrinter extends CordovaPlugin {
 						// PrinterInfo.VAlign.TOP / MIDDLE / BOTTOM
 						// PrinterInfo.Margin = int
 
-						if(modelName == "QL-820NWB") myPrinterInfo.printerModel = PrinterInfo.Model.QL_820NWB;
+						if(modelName.equals("QL-820NWB")) myPrinterInfo.printerModel = PrinterInfo.Model.QL_810WQL_820NWB;
 						else myPrinterInfo.printerModel = PrinterInfo.Model.QL_810W;
 
 						//myPrinterInfo.printerModel = PrinterInfo.Model.QL_820NWB;
